@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  
+  <title>Advanced Calculator</title>
+
+  
+  <link href="../style.css" rel="stylesheet" type="text/css">
+  <link href="../navbar.css" rel="stylesheet" type="text/css" />
+  <link href="EquationSolver.css" rel="stylesheet" type="text/css">
+
+  <script type="module" src="../script.js"></script>
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script></head>
+
+<body>
+  <script src="updateNumVars.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <div id="content" class ="content">
+    <br>
+    
+    <div id = "header" class = "header">
+      <div id = "navbar" class = "navbar">
+        <ul class="nav">
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="#">Basic Calculator</a></li>
+          <li><a href="#">Equation Solver</a></li>
+          <li><a href="#">Calculus</a></li>
+          <li><a href="#">Linear Algebra</a></li>
+          <li><a href="#">Differential Equations</a></li>
+          <li><a href="#">Permutations and Combinations</a></li>
+          <li><a href="#">Statistics</a></li>
+        </ul>
+      </div>
+    </div>
+    
+    <br>
+    
+    <div id = "body" class ="body">
+      <div id="titleDiv" class="title">
+        <h2 id="title">Equation Solver</h2>
+      </div>
+
+      <div id="solverContent" class="solverContent">
+        <!-- 3 Columns: 1. Input & Answer 2. Work 3. Steps-->
+        <table>
+          <tr>
+            <td>
+              <!-- Div for Solving Equations -->
+              <div id="equationSolver">
+                <h3>Equation Solver</h3>
+                <form>
+                  
+                  <!-- Amount of Variables and Method Used -->
+                  <div id="rangeAndMethod">
+                    <input type="range" id="numVars" min="1" max="3" value="1" onchange="updateNumVars(this.value);">
+                    <input type="text" id="numVarsText" class="numVarsText" value="1" readonly>
+                    <br>
+                    <!--<input type ="text" id="methodSolve" value="Substitution">-->
+                    <label for="methods">Method:</label>
+
+<select name="methods" id="methods">
+  <option value="substitution">Substitution</option>
+  <option value="elimination">Elimination</option>
+  <option value="gaussianElimination">Gaussian Elimination</option>
+</select>
+                  </div>
+                  <br>
+                  <!-- HTML for one variable inputs -->
+                  <div id="equation1Div" class="oneVar">
+                    <input type="text" id="equation1" class="oneVar numVars" required>
+                  </div>
+                  <br>
+                  <!-- HTML for two variable inputs -->
+                  <div id="equation2Div" class="twoVar">
+                    <input type="text" id="equation2" class="twoVar numVars" required>
+                  </div>
+                  <br>
+                  <!-- HTML for three variable inputs -->
+                  <div id="equation3Div" class="threeVar">
+                    <input type="text" id="equation3" class="threeVar numVars" required>
+                  </div>
+                  <br>
+                  <!-- Submit and Clear Buttons -->
+                  <div id="formButtons">
+                    <input type="button" id = "solve" value="Solve">
+                    <input type="reset" id = "clear" value="Clear" onclick="updateNumVars(1);">
+                  </div>
+                  <!-- HTML for answers and work shown-->
+                  <h3>Answer</h3>
+                  <div id="answers" class="answersDiv">
+                    <h3 id="varX" class="answers"></h3>
+                    <h3 id="varY" class="answers"></h3>
+                    <h3 id="varZ" class="answers"></h3>
+                  </div>
+                </form>
+              </div>
+            </td>
+            <td>
+              <div id="workDiv">
+                <h3 class="workTitle">Work</h3>
+                <div class="work">
+                <h3 id="workVar1" class="answers workVar1"></h3>
+                <h4 id="workVar2" class="answers workVar2"></h4>
+                <h5 id="workVar3" class="answers workVar3"></h5>
+                </div>
+              </div>
+            </td>
+            <td>
+              <h3>Steps</h3>
+              <div class="stepsDiv">
+                <div class="oneVarSteps">
+                  <h3>1) Solve for X</h3>
+                  <br><br>
+                  <h3>2) Simplify</h3>
+                </div>
+                <div class="twoVarSteps">
+                  <h3>1) Isolate X</h3>
+                  <br><br>
+                  <h3>2) Simplify</h3>
+                  <br><br>
+                  <h3>3) Plug X in and <br>Solve for Y </h3>
+                  <br><br>
+                  <h3>4) Plug Y in and <br>Solve for X</h3>
+                </div>
+                <div class="threeVarSteps">
+                  <h5>1) Matrix of Minors:<br>Determinant of the values <br>not in its row and column</h5>
+                  <h5>2) Matrix of Cofactors:<br>Apply a checkerboard of <br>negative signs</h5>
+                  <h5>3) Adjugate:<br>Swap Variables over<br> the diagonal</h5>
+                  <h5>4) Get the Inverse by <br>multiplying by 1/determinant <br> Note: We can multiply <br>original top row elements <br>by the cofactor</h5>
+                  <h5>5)Multiply the Inverse <br>of Coefficients Matrix <br>by the Constants Matrix <br>(Dot Product)</h5>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div id = "Input&Output">
+      </div>
+      <div id = "Work">
+      </div>
+      <div id = "Steps">
+      </div>
+    </div>
+  </div>
+</body>
+</html>

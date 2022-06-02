@@ -1,0 +1,27 @@
+.navbar{
+  justify-content: center;
+  margin: auto;
+  width: 97%;
+}
+ul.nav {
+  justify-content: center;
+  margin: auto;
+  list-style:none;
+  height:36px; line-height:36px;
+  background:#143d59;
+  font-size:13px;
+}
+ul.nav li {
+  border-right:1px solid #f4b41a;
+  float: left;
+}
+ul.nav a {
+  display:block;
+  padding:0 25px;
+  color:white;
+  text-decoration:none;
+}
+ul.nav a:hover,
+ul.nav li.current a {
+  background:#143d79;
+}
