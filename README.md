@@ -15,22 +15,30 @@
 
 #### Methods for Solving Equations
 
-|     1 Variable Equation    |     2  Variable Equations    |     3+ Variable Equations  |
-|------------------------------|-------------------------------|-------------------------------|
-|  Isolate and Solve for X     | Substitution, Elimination, Gaussian Elimination    |    Elimination, Gaussian Elimination |
+> |     1 Variable Equation    |     2  Variable Equations    |     3+ Variable Equations  |
+> |------------------------------|-------------------------------|-------------------------------|
+> |  Isolate and Solve for X     | Substitution, Elimination, Gaussian Elimination    |    Elimination, Gaussian Elimination |
 
 #### Code Sections
 
-1. Input Validation/Converter
-1. Convert to Generic Equation Format
-1. Solve for each Variable
-1. Output Answer
+> 1. Input Validation/Converter
+> 1. Convert to Generic Equation Format
+> 1. Solve for Each Variable
+> 1. Output Answer in Proper Format
 
 ## Challenges
 - Modularity
 - Readable Code
 - Comments
 
-## Upcoming Additions
-- Soon: System of Equation Solver 2 & 3+ Variable Equation Solver
-- Later: 
+## To Do
+- Complete Basic Version of System of Equations Solver
+  - New Equation Input Check Function
+  - 1 Variable (Done)
+  - 2 Variables (Work in Progress)
+    - Functionality (Work in Progress)
+      - Substitution (Work in Progress)
+      - Elimination
+      - Gaussian Elimination
+    - Modularity
+  - 3 Variables

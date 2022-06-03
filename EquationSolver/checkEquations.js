@@ -1,3 +1,4 @@
+//Check if the equation/s are valid
 function check(equation1, equation2, equation3){
   let isValid = false;
   let numVars = document.getElementById("numVars").value;

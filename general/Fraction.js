@@ -1,5 +1,5 @@
 //Fraction Class for storing and using the numerator and denominator of a fraction, and creating a toString function for them
-class newFraction{
+class Fraction{
   constructor(numerator, denominator){
     this.numerator = numerator;
     this.denominator = denominator;
@@ -32,4 +32,4 @@ class newFraction{
   }
 }
 
-export default newFraction;
+export default Fraction;

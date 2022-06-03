@@ -36,7 +36,7 @@ class Exponent{
       return `{\\left(${(this.base.toString())}\\right)}^${this.power}`
     } 
     //If exponent is 1, print base by itself
-    else if(this.power != 1){
+    else if(this.power == 1){
       return this.base.toString()
     }
     //print exponent normally

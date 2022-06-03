@@ -1,6 +1,7 @@
-import newFraction from "../general/Fraction.js";
+import Fraction from "../general/Fraction.js";
 import Exponent from "../general/Exponent.js";
 import GCD from "../general/Gcd.js";
+import LCM from "../general/Gcd.js";
 import Matrix from "../general/Matrix.js";
 import Variable from "../general/Variable.js";
 import Expression from "../general/Expression.js";
@@ -18,6 +19,7 @@ class EquationSolver {
     this.equation2 = equation2;
     this.equation3 = equation3;
   }
+  
   //Solving the Equations
   solve() {
     console.log("Solving Equation...");
@@ -31,8 +33,6 @@ class EquationSolver {
     Solving a 1 Variable Equation
     */
     if (numVars == 1) {
-      //Part 1. Combine like terms and put equation into format: _x = _
-
       //Step 0. Create Original Equation String
       let originalEquationString = this.createOriginalEquationString();
       work += originalEquationString;
@@ -41,40 +41,26 @@ class EquationSolver {
       let equation1Split = this.equation1.split("= ");
       let equation1 = new Equation(equation1Split[0], equation1Split[1]);
 
-      //Step 2. Combine Like Terms of Equation with each side individually
-      let expressionsCombinedLikeTerms = this.combineLikeTermsEquation(equation1);
-      let leftX = expressionsCombinedLikeTerms[0];
-      let leftNum = expressionsCombinedLikeTerms[1];
-      let rightX = expressionsCombinedLikeTerms[2];
-      let rightNum = expressionsCombinedLikeTerms[3];
+      //Step 2. Combine Like Terms of Equation with each side individually. Format: _x +/- _ = _x +/- _
+      let combinedLikeTerms = this.combineLikeTerms(equation1);
+      let leftX = combinedLikeTerms[0];
+      let leftNum = combinedLikeTerms[1];
+      let rightX = combinedLikeTerms[2];
+      let rightNum = combinedLikeTerms[3];
 
-      let expressionLeft = null;
-      if (leftX.coefficient == 0) {
-        expressionLeft = new Expression([leftNum]);
-      } else if (leftNum == 0) {
-        expressionLeft = new Expression([leftX]);
-      } else {
-        expressionLeft = new Expression([leftX, leftNum]);
-      }
-
-      let expressionRight = null;
-      if (rightX.coefficient == 0) {
-        expressionRight = new Expression([rightNum]);
-      } else if (rightNum == 0) {
-        expressionRight = new Expression([rightX]);
-      } else {
-        expressionRight = new Expression([rightX, rightNum]);
-      }
+      let expressionLeft = this.createCombinedTermsExpression([leftX, leftNum]);
+      let expressionRight = this.createCombinedTermsExpression([rightX, rightNum]);
       let combinedEquation = new Equation(expressionLeft, expressionRight);
+      
       let equation1CombinedLikeTerms = `${combinedEquation.toString()}<br>`;
       if (equation1CombinedLikeTerms != originalEquationString) {
         work += equation1CombinedLikeTerms;
       }
 
-      //Step 3. Combine Like Terms on Both Sides of the Equation
+      //Step 3. Combine Like Terms on Both Sides of the Equation. Format: _x = _
       let simplifiedEquationNum = rightNum - leftNum;
       let simplifiedEquationX = new Variable(leftX.coefficient - rightX.coefficient, "x");
-      if (simplifiedEquationNum < 0 && simplifiedEquationX.coefficient < 0) {
+      if (simplifiedEquationX.coefficient < 0) {
         simplifiedEquationNum *= -1;
         simplifiedEquationX.coefficient *= -1;
       }
@@ -84,65 +70,15 @@ class EquationSolver {
         work += combinedBothSidesEquationString;
       }
       work += `<br><br>`;
-
-      //Part 2. Divide Constant by X's Coefficient to result in answer x = _
-      let answer = "";
-      //Step 1. No Solution Answers
-      if (simplifiedEquationX.coefficient == 0 && simplifiedEquationNum != 0) {
-        work += `No Solution <br> ${MathString(`0 \\ne ${simplifiedEquationNum}`)}`;
-        answer = `No Solution <br> ${MathString(`0 \\ne ${simplifiedEquationNum}`)}`;
-      }
-      //Step 2. All Real Numbers Answers
-      else if (simplifiedEquationX.coefficient == 0) {
-        work += `x = ${MathString(`\\in \\mathbb{R}`)}`;
-        answer = `x ${MathString(`\\in \\mathbb{R}`)}`;
-      }
-      //Step 3. All Integer Answers
-      else if (simplifiedEquationX.coefficient == 1 || simplifiedEquationX.coefficient == -1) {
-        if (simplifiedEquationX.coefficient == -1) {
-          simplifiedEquationNum *= -1;
-        }
-        work += `x = ${simplifiedEquationNum}`;
-        answer = `x = ${simplifiedEquationNum}`;
-      }
-      //Step 4. All Fraction/Decimal Answers
-      else {
-        //Step 4a. Fractions Reduceable to Integers Answers
-        if (simplifiedEquationNum / simplifiedEquationX.coefficient == 0) {
-          let ratio = simplifiedEquationNum / simplifiedEquationX.coefficient;
-          simplifiedEquationNum /= ratio;
-          work += `x = ${simplifiedEquationNum}`;
-          answer = `x = ${simplifiedEquationNum}`;
-        }
-        else {
-          //Step 4b. Simply Fractions
-          if (GCD(simplifiedEquationNum, simplifiedEquationX.coefficient) != 0) {
-            let ratio = GCD(simplifiedEquationNum, simplifiedEquationX.coefficient);
-            simplifiedEquationNum /= ratio;
-            simplifiedEquationX.coefficient /= ratio;
-          }
-          //Step 4c. New Integer Answers
-          if (simplifiedEquationX.coefficient == 1 || simplifiedEquationX.coefficient == -1) {
-            if (simplifiedEquationX.coefficient == -1) {
-              simplifiedEquationNum *= -1;
-            }
-            work += `x = ${simplifiedEquationNum}`;
-            answer = `x = ${simplifiedEquationNum}`;
-          }
-          //Step 4d. Non-Reduceable Fraction Answers
-          else {
-            let answerFraction = new newFraction(simplifiedEquationNum, simplifiedEquationX.coefficient);
-            simplifiedEquationX.coefficient = 1;
-            work += `x = ${MathString(answerFraction.toString())} <br>`;
-            answer = `x = ${MathString(answerFraction.toString())} <br> or <br>x ${MathString(answerFraction.toDecimalString())}`;
-          }
-        }
-      }
-
-      //Display Work and Answers
+      
+      //Step 4. Divide Constant by X's Coefficient to result in answer x = _ with proper formatting
+      let answerStrings = this.createAnswerString(simplifiedEquationX.coefficient, simplifiedEquationNum, "x");
+      work += answerStrings[0];
+      let answer = answerStrings[1];
+      
+      //Step 5. Display Work and Answers
       document.getElementById("workVar1").innerHTML = work;
       document.getElementById("varX").innerHTML = answer;
-
       //Update MathJax on screen
       MathJax.typeset();
 
@@ -649,9 +585,7 @@ let equation1RightSplit = newEquation1.expression2.split(" ");
     }
   }
 
-  /*
-  Create orginal equations for 1, 2, and/or 3 equations
-  */
+  //Create orginal equations for 1, 2, and/or 3 equations//
   createOriginalEquationString() {
     let equations = [this.equation1, this.equation2, this.equation3];
     let originalEquationString = "";
@@ -659,15 +593,22 @@ let equation1RightSplit = newEquation1.expression2.split(" ");
     for (let i = 0; i < numVars; i++) {
       let equationSplit = equations[i].split("");
       for (let index = 0; index < equationSplit.length; index++) {
+        //If it isnt a minus sign, print it normally
         if (equationSplit[index] != "-") {
           originalEquationString += equationSplit[index];
-        } else {
+        } 
+        //If it is a minus sign
+        else {
+          //If the next element is not a space then print a minus sign then the next element
           if (index + 1 != " ") {
             originalEquationString += equationSplit[index];
             index += 1;
             originalEquationString += equationSplit[index];
-          } else {
+          } 
+          //If the next element is not a space then jump to next element
+          else {
             index += 2;
+            //If element is an x
             if (equationSplit[index].includes("x")) {
               let xSplit = equationSplit[index].split("x");
               if (equationSplit[index] != "x") {
@@ -675,21 +616,27 @@ let equation1RightSplit = newEquation1.expression2.split(" ");
               } else {
                 originalEquationString += `-x`;
               }
-            } else if (equationSplit[index].includes("y")) {
+            } 
+            //If element is a y
+            else if (equationSplit[index].includes("y")) {
               let ySplit = equationSplit[index].split("y");
               if (equationSplit[index] != "y") {
                 originalEquationString += `${-1 * parseInt(ySplit[1])}y`;
               } else {
                 originalEquationString += `-y`;
               }
-            } else if (equationSplit[index].includes("z")) {
+            } 
+            //If element is a z
+            else if (equationSplit[index].includes("z")) {
               let zSplit = equationSplit[index].split("z");
               if (equationSplit[index] != "z") {
                 originalEquationString += `${-1 * parseInt(zSplit[1])}z`;
               } else {
                 originalEquationString += `-z`;
               }
-            } else {
+            } 
+            //If element is a number
+            else {
               originalEquationString += -1 * equationSplit[index];
             }
           }
@@ -701,621 +648,362 @@ let equation1RightSplit = newEquation1.expression2.split(" ");
     return originalEquationString;
   }
 
-  /*
-  Combine Like Terms of an Equation, both sides of the equation separately
-  */
-  combineLikeTermsEquation(equation1, equation2 = null, equation3 = null) {
-    //Step 1. Format the left side of the Equation
-    //Step 1a. Create array of variables and constants on left side
+  //Combine Like Terms of an Equation, both sides of the equation separately//
+  combineLikeTerms(equation1, equation2 = null, equation3 = null) {
     let equations = [equation1, equation2, equation3];
     let numVars = document.getElementById("numVars").value;
+    //Loop through all equations
+
+    let expressionLeftX = 0;
+    let expressionLeftY = 0;
+    let expressionLeftZ = 0;
+    let expressionLeftNum = 0;
+    let expressionRightX = 0;
+    let expressionRightY = 0;
+    let expressionRightZ = 0;
+    let expressionRightNum = 0;
+
+    let expressions = [];
+    
     for (let i = 0; i < numVars; i++) {
+      //Step 1. Format the left side of the Equation
+      
+      //Step 1a. Create array of variables and constants on left side
       let equation1LeftSplit = equations[i].expression1.split(" ");
       equation1LeftSplit.pop();
       let expressionLeftArray = [];
       for (let index = 0; index < equation1LeftSplit.length; index++) {
-        if (equation1LeftSplit[index] != " ") {
-          if (equation1LeftSplit[index] != "+") {
-            if (equation1LeftSplit[index].includes("x")) {
-              let xVariableLeft = null;
-              if (equation1LeftSplit[index] == "x") {
-                xVariableLeft = new Variable(1, "x");
-              } else if (equation1LeftSplit[index] == "-x") {
-                xVariableLeft = new Variable(-1, "x");
-              } else {
-                xVariableLeft = new Variable(parseInt(equation1LeftSplit[index].split("x")), "x");
-                xVariableLeft.isPositive = true;
-              }
-              expressionLeftArray.push(xVariableLeft);
+        if (equation1LeftSplit[index] != "+") {
+          if (equation1LeftSplit[index].includes("x")) {
+            let xVariableLeft = null;
+            if (equation1LeftSplit[index] == "x") {
+              xVariableLeft = new Variable(1, "x");
+            } else if (equation1LeftSplit[index] == "-x") {
+              xVariableLeft = new Variable(-1, "x");
             } else {
-              if (equation1LeftSplit[index] == "-") {
-                if (equation1LeftSplit[index + 1].includes("x")) {
-                  if (equation1LeftSplit[index + 1] == "x") {
-                    let xVariableLeft = new Variable(-1, "x");
-                    expressionLeftArray.push(xVariableLeft);
-                    index += 2;
-                  } else {
-                    let xVariableLeft = new Variable(-1 * parseInt(equation1LeftSplit[index + 1].split("x")), "x");
-                    expressionLeftArray.push(xVariableLeft);
-                    index += 2;
-                  }
+              xVariableLeft = new Variable(parseInt(equation1LeftSplit[index].split("x")), "x");
+              xVariableLeft.isPositive = true;
+            }
+            expressionLeftArray.push(xVariableLeft);
+          } else if (equation1LeftSplit[index].includes("y")) {
+            let yVariableLeft = null;
+            if (equation1LeftSplit[index] == "y") {
+              yVariableLeft = new Variable(1, "y");
+            } else if (equation1LeftSplit[index] == "-y") {
+              yVariableLeft = new Variable(-1, "y");
+            } else {
+              yVariableLeft = new Variable(parseInt(equation1LeftSplit[index].split("y")), "y");
+              yVariableLeft.isPositive = true;
+            }
+            expressionLeftArray.push(yVariableLeft);
+          } else if (equation1LeftSplit[index].includes("z")) {
+            let zVariableLeft = null;
+            if (equation1LeftSplit[index] == "z") {
+              zVariableLeft = new Variable(1, "z");
+            } else if (equation1LeftSplit[index] == "-z") {
+              zVariableLeft = new Variable(-1, "z");
+            } else {
+              zVariableLeft = new Variable(parseInt(equation1LeftSplit[index].split("z")), "z");
+              zVariableLeft.isPositive = true;
+            }
+            expressionLeftArray.push(zVariableLeft);
+          } else {
+            if (equation1LeftSplit[index] == "-") {
+              if (equation1LeftSplit[index + 1].includes("x")) {
+                if (equation1LeftSplit[index + 1] == "x") {
+                  let xVariableLeft = new Variable(-1, "x");
+                  expressionLeftArray.push(xVariableLeft);
+                  index += 1;
                 } else {
-                  expressionLeftArray.push(-1 * parseInt(equation1LeftSplit[index + 1]));
+                  let xVariableLeft = new Variable(-1 * parseInt(equation1LeftSplit[index + 1].split("x")), "x");
+                  expressionLeftArray.push(xVariableLeft);
                   index += 1;
                 }
-              } else {
-                expressionLeftArray.push(parseInt(equation1LeftSplit[index]));
+              } else if (equation1LeftSplit[index + 1].includes("y")) {
+                if (equation1LeftSplit[index + 1] == "y") {
+                  let yVariableLeft = new Variable(-1, "y");
+                  expressionLeftArray.push(yVariableLeft);
+                  index += 1;
+                } else {
+                  let yVariableLeft = new Variable(-1 * parseInt(equation1LeftSplit[index + 1].split("y")), "y");
+                  expressionLeftArray.push(yVariableLeft);
+                  index += 1;
+                }
+              } else if (equation1LeftSplit[index + 1].includes("z")) {
+                if (equation1LeftSplit[index + 1] == "z") {
+                  let zVariableLeft = new Variable(-1, "z");
+                  expressionLeftArray.push(zVariableLeft);
+                  index += 1;
+                } else {
+                  let zVariableLeft = new Variable(-1 * parseInt(equation1LeftSplit[index + 1].split("z")), "z");
+                  expressionLeftArray.push(zVariableLeft);
+                  index += 1;
+                }
+              } else{
+                index += 1;
+                expressionLeftArray.push(-1 * parseInt(equation1LeftSplit[index]));
               }
+            } else {
+              expressionLeftArray.push(parseInt(equation1LeftSplit[index]));
             }
           }
         }
       }
-      //Step 2b. Create separate arrays for variables and constants on left side
+      //Step 1b. Create separate arrays for variables and constants on left side
       let expressionLeftXArray = [];
+      let expressionLeftYArray = [];
+      let expressionLeftZArray = [];
       let expressionLeftNumArray = [];
       for (let index = 0; index < expressionLeftArray.length; index++) {
         if (expressionLeftArray[index].toString().includes("x")) {
           expressionLeftXArray.push(expressionLeftArray[index]);
+        } else if (expressionLeftArray[index].toString().includes("y")) {
+          expressionLeftYArray.push(expressionLeftArray[index]);
+        } else if (expressionLeftArray[index].toString().includes("z")) {
+          expressionLeftZArray.push(expressionLeftArray[index]);
         } else if (!expressionLeftArray[index].toString().includes("+")) {
           expressionLeftNumArray.push(expressionLeftArray[index]);
         }
       }
-      //Step 2c. Create Variables for sum of variables and sum of constants on left side
+      //Step 1c. Create Variables for sum of variables and sum of constants on left side
       let leftXSum = 0;
       for (let index = 0; index < expressionLeftXArray.length; index++) {
         leftXSum += expressionLeftXArray[index].coefficient;
       }
-      let expressionLeftX = new Variable(leftXSum, "x");
+      expressionLeftX = new Variable(leftXSum, "x");
+      let leftYSum = 0;
+      for (let index = 0; index < expressionLeftYArray.length; index++) {
+        leftYSum += expressionLeftYArray[index].coefficient;
+      }
+      expressionLeftY = new Variable(leftYSum, "y");
+      let leftZSum = 0;
+      for (let index = 0; index < expressionLeftZArray.length; index++) {
+        leftZSum += expressionLeftZArray[index].coefficient;
+      }
+      expressionLeftZ = new Variable(leftZSum, "z");
       let leftNumSum = 0;
       for (let index = 0; index < expressionLeftNumArray.length; index++) {
         leftNumSum += expressionLeftNumArray[index];
       }
-      let expressionLeftNum = leftNumSum;
+      expressionLeftNum = leftNumSum;
 
-      //Step 3. Format the Right side of the Equation
-      //Step 3a. Create array of variables and constants on right side
+      //Step 2. Format the Right side of the Equation
+      
+      //Step 2a. Create array of variables and constants on right side
       let equation1RightSplit = equations[i].expression2.split(" ");
       let expressionRightArray = [];
       for (let index = 0; index < equation1RightSplit.length; index++) {
-        if (equation1RightSplit[index] != " ") {
-          if (equation1RightSplit[index] != "+") {
-            if (equation1RightSplit[index].includes("x")) {
-              let xVariableRight = null;
-              if (equation1RightSplit[index] == "x") {
-                xVariableRight = new Variable(1, "x");
-              } else if (equation1RightSplit[index] == "-x") {
-                xVariableRight = new Variable(-1, "x");
-              } else {
-                xVariableRight = new Variable(parseInt(equation1RightSplit[index].split("x")), "x");
-                xVariableRight.isPositive = true;
-              }
-              expressionRightArray.push(xVariableRight);
+        if (equation1RightSplit[index] != "+") {
+          if (equation1RightSplit[index].includes("x")) {
+            let xVariableRight = null;
+            if (equation1RightSplit[index] == "x") {
+              xVariableRight = new Variable(1, "x");
+            } else if (equation1RightSplit[index] == "-x") {
+              xVariableRight = new Variable(-1, "x");
             } else {
-              if (equation1RightSplit[index] == "-") {
-                if (equation1RightSplit[index + 1].includes("x")) {
-                  if (equation1RightSplit[index + 1] == "x") {
-                    let xVariableRight = new Variable(-1, "x");
-                    expressionRightArray.push(xVariableRight);
-                    index += 2;
-                  } else {
-                    let xVariableRight = new Variable(-1 * parseInt(equation1RightSplit[index + 1].split("x")), "x");
-                    expressionRightArray.push(xVariableRight);
-                    index += 2;
-                  }
+              xVariableRight = new Variable(parseInt(equation1RightSplit[index].split("x")), "x");
+              xVariableRight.isPositive = true;
+            }
+            expressionRightArray.push(xVariableRight);
+          } else if (equation1RightSplit[index].includes("y")) {
+            let yVariableRight = null;
+            if (equation1RightSplit[index] == "y") {
+              yVariableRight = new Variable(1, "y");
+            } else if (equation1RightSplit[index] == "-y") {
+              yVariableRight = new Variable(-1, "y");
+            } else {
+              yVariableRight = new Variable(parseInt(equation1RightSplit[index].split("y")), "y");
+              yVariableRight.isPositive = true;
+            }
+            expressionRightArray.push(yVariableRight);
+          } else if (equation1RightSplit[index].includes("z")) {
+            let zVariableRight = null;
+            if (equation1RightSplit[index] == "z") {
+              zVariableRight = new Variable(1, "z");
+            } else if (equation1RightSplit[index] == "-z") {
+              zVariableRight = new Variable(-1, "z");
+            } else {
+              zVariableRight = new Variable(parseInt(equation1RightSplit[index].split("z")), "z");
+              zVariableRight.isPositive = true;
+            }
+            expressionRightArray.push(zVariableRight);
+          } else{
+            if (equation1RightSplit[index] == "-") {
+              if (equation1RightSplit[index + 1].includes("x")) {
+                if (equation1RightSplit[index + 1] == "x") {
+                  let xVariableRight = new Variable(-1, "x");
+                  expressionRightArray.push(xVariableRight);
+                  index += 2;
                 } else {
-                  expressionRightArray.push(-1 * parseInt(equation1RightSplit[index + 1]));
-                  index += 1;
+                  let xVariableRight = new Variable(-1 * parseInt(equation1RightSplit[index + 1].split("x")), "x");
+                  expressionRightArray.push(xVariableRight);
+                  index += 2;
                 }
-              } else {
-                expressionRightArray.push(parseInt(equation1RightSplit[index]));
+              } else if (equation1RightSplit[index + 1].includes("y")) {
+                if (equation1RightSplit[index + 1] == "y") {
+                  let yVariableRight = new Variable(-1, "y");
+                  expressionRightArray.push(yVariableRight);
+                  index += 2;
+                } else {
+                  let yVariableRight = new Variable(-1 * parseInt(equation1RightSplit[index + 1].split("y")), "y");
+                  expressionRightArray.push(yVariableRight);
+                  index += 2;
+                }
+              } else if (equation1RightSplit[index + 1].includes("z")) {
+                if (equation1RightSplit[index + 1] == "z") {
+                  let zVariableRight = new Variable(-1, "z");
+                  expressionRightArray.push(zVariableRight);
+                  index += 2;
+                } else {
+                  let zVariableRight = new Variable(-1 * parseInt(equation1RightSplit[index + 1].split("z")), "z");
+                  expressionRightArray.push(zVariableRight);
+                  index += 2;
+                }
+              } else{
+                expressionRightArray.push(-1 * parseInt(equation1RightSplit[index + 1]));
+                index += 1;
               }
+            } else {
+              expressionRightArray.push(parseInt(equation1RightSplit[index]));
             }
           }
         }
       }
-      //Step 3b. Create separate arrays for variables and constants on right side
-      let tempExpressionRight = new Expression(expressionRightArray);
+      //Step 2b. Create separate arrays for variables and constants on right side
       let expressionRightXArray = [];
+      let expressionRightYArray = [];
+      let expressionRightZArray = [];
       let expressionRightNumArray = [];
       for (let index = 0; index < expressionRightArray.length; index++) {
         if (expressionRightArray[index].toString().includes("x")) {
           expressionRightXArray.push(expressionRightArray[index]);
+        } else if (expressionRightArray[index].toString().includes("y")) {
+          expressionRightYArray.push(expressionRightArray[index]);
+        } else if (expressionRightArray[index].toString().includes("z")) {
+          expressionRightZArray.push(expressionRightArray[index]);
         } else if (!expressionRightArray[index].toString().includes("+")) {
           expressionRightNumArray.push(expressionRightArray[index]);
         }
       }
-      //Step 3c. Create Variables for sum of variables and sum of constants on left side
+      //Step 2c. Create Variables for sum of variables and sum of constants on left side
       let rightXSum = 0;
       for (let index = 0; index < expressionRightXArray.length; index++) {
         rightXSum += expressionRightXArray[index].coefficient;
       }
-      let expressionRightX = new Variable(rightXSum, "x");
+      expressionRightX = new Variable(rightXSum, "x");
+      let rightYSum = 0;
+      for (let index = 0; index < expressionRightYArray.length; index++) {
+        rightYSum += expressionRightYArray[index].coefficient;
+      }
+      expressionRightY = new Variable(rightYSum, "y");
+      let rightZSum = 0;
+      for (let index = 0; index < expressionRightZArray.length; index++) {
+        rightZSum += expressionRightZArray[index].coefficient;
+      }
+      expressionRightZ = new Variable(rightZSum, "z");
       let rightNumSum = 0;
       for (let index = 0; index < expressionRightNumArray.length; index++) {
         rightNumSum += expressionRightNumArray[index];
       }
-      let expressionRightNum = rightNumSum;
+      expressionRightNum = rightNumSum;
+      
       if (numVars == 1) {
-        return [expressionLeftX, expressionLeftNum, expressionRightX, expressionRightNum];
+        expressions.push([expressionLeftX, expressionLeftNum, expressionRightX, expressionRightNum]);
       } else if (numVars == 2) {
-        return [expressionLeftX, expressionLeftNum, expressionRightX, expressionRightNum];
+        expressions.push([expressionLeftX, expressionLeftY, expressionLeftNum, expressionRightX, expressionRightY, expressionRightNum]);
       } else if (numVars == 3) {
-        return [expressionLeftX, expressionLeftNum, expressionRightX, expressionRightNum];
+        expressions.push([expressionLeftX, expressionLeftY, expressionLeftZ, expressionLeftNum, expressionRightX, expressionRightY, expressionRightZ, expressionRightNum]);
       }
     }
-  }
-}
-
-class Fraction {
-  constructor(numerator, denominator) {
-    this.numerator = numerator;
-    this.denominator = denominator;
-    this.isCoefficient = false;
-    this.isNotSingle = true;
-  }
-
-  setIsCoefficient() {
-    isCoefficient = true;
+    //Step 3 Output correct Variables
+    if (numVars == 1) {
+      return expressions[0];
+    } else if (numVars == 2) {
+      return [expressions[0], expressions[1]];
+    } else if (numVars == 3) {
+      return expressions;
+    }
   }
 
-  toString() {
-    if (this.isCoefficient) {
-      if (this.numerator == 1 && this.denominator == 1) {
-        return ``;
+  //Create Expressions based off the values of the combined terms
+  createCombinedTermsExpression(combinedExpressionArray){
+    let newExpressionArray = [];
+    for(let i = 0; i < combinedExpressionArray.length; i++){
+      if(combinedExpressionArray[i] != 0){
+        newExpressionArray.push(combinedExpressionArray[i]);
       }
     }
-    if (this.numerator == 0 && this.isNotSingle) {
-      return ``;
-    }
-    if (this.numerator == 0) {
-      return `0`;
-    }
-    if (this.denominator < 0) {
-      this.numerator *= -1;
-      this.denominator *= -1;
-    }
-    if (this.denominator == 1) {
-      return this.numerator;
-    }
-    let fractionString = `<sup>${this.numerator}</sup>&frasl;<sub>${this.denominator}</sub>`;
-    return fractionString;
-  }
-  toEquationString() {
-    let fractionEquationString = "";
-    if (this.numerator < 0 && this.denominator < 0) {
-      this.numerator *= -1;
-      this.denominator *= -1;
-      fractionEquationString = ` + ${this.toString(this.numerator, this.denominator)}`;
-      this.numerator *= -1;
-      this.denominator *= -1;
-    } else if (this.numerator < 0) {
-      this.numerator *= -1;
-      fractionEquationString = ` - ${this.toString(this.numerator, this.denominator)}`;
-      this.numerator *= -1;
-    } else if (this.denominator < 0) {
-      this.denominator *= -1;
-      fractionEquationString = ` - ${this.toString(this.numerator, this.denominator)}`;
-      this.denominator *= -1;
-    } else {
-      fractionEquationString = ` + ${this.toString(this.numerator, this.denominator)}`;
-    }
-    return fractionEquationString;
+    return new Expression(newExpressionArray);
   }
 
-  reduce() {
-    let reduceFactor = 1;
-    if (gcd(this.numerator, this.denominator) != 0 && gcd(this.numerator, this.denominator) != 1) {
-      reduceFactor = gcd(this.numerator, this.denominator);
-    } else if ((gcd(this.denominator, this.numerator) != 0 && gcd(this.denominator, this.numerator) != 1) && this.denominator != 1) {
-      reduceFactor = gcd(this.denominator, this.numerator);
+  //Create Answer String
+  createAnswerString(coefficient, num, variable){
+    let work = "";
+    let answer = "";
+
+    //Step 1. No Solution Answers
+    if (coefficient == 0 && num != 0) {
+      work += `No Solution <br> ${MathString(`0 \\ne ${num}`)}`;
+      answer = `No Solution <br> ${MathString(`\\text{${variable} = }\\varnothing`)}`;
     }
-    this.numerator /= reduceFactor;
-    this.denominator /= reduceFactor;
-  }
-  reduceIfEqualsOne() {
-    if (this.numerator / this.denominator == 1) {
-      this.numerator = 1;
-      this.denominator = 1;
+    //Step 2. All Real Numbers Answers
+    else if (coefficient == 0) {
+      work += `${variable} = ${MathString(`\\in \\mathbb{R}`)}`;
+      answer = `${variable} ${MathString(`\\in \\mathbb{R}`)}`;
     }
-  }
-
-  add(fraction) {
-    this.numerator += fraction.numerator;
-  }
-  substract(fraction) {
-    this.numerator -= fraction.numerator;
-  }
-
-  multiplyNumber(num) {
-    this.numerator *= num;
-  }
-  outputMultiplyNumber(num) {
-    this.multiplyNumber(num);
-    return this;
-  }
-  multiplyFraction(fraction) {
-    this.numerator *= fraction.numerator;
-    this.denominator *= fraction.denominator;
-  }
-  divideFraction(fraction) {
-    this.denominator = fraction.numerator;
-  }
-}
-
-function createCoefficientsMatrix(equation1, equation2, equation3) {
-  let newEquation1 = equation1;
-  let numVars = document.getElementById("numVars").value;
-  if (numVars == 1) {
-    let equation1Split = newEquation1.split("=");
-    let equation1 = new Equation(equation1Split[0], equation1Split[1]);
-    equation1Split = newEquation1.split(" ");
-    let coefficientsMatrix = [[0]];
-    if (equation1Split[0] == "x") {
-      coefficientsMatrix[0][0] = 1;
-    } else {
-      let xStringArray = equation1Split[0].split("");
-      let xString = "";
-      let xIndex = 0;
-      while (xStringArray[xIndex] != "x") {
-        xString += xStringArray[xIndex];
-        xIndex++;
+    //Step 3. Integer Answers
+    else if (coefficient == 1 || coefficient == -1 || num == 0) {
+      if (coefficient == -1) {
+        num *= -1;
       }
-      coefficientsMatrix[0][0] = xString;
+      work += `${variable} = ${num}`;
+      answer = `${variable} = ${num}`;
     }
-    return coefficientsMatrix;
-  } else if (numVars == 2) {
-    let coefficientsMatrix = [[0, 0], [0, 0]];
-
-    //Equation 1
-    let equation1Split = equation1.split(" ");
-    //x1
-    if (equation1Split[0] == "x") {
-      coefficientsMatrix[0][0] = 1;
-    } else {
-      let x1StringArray = equation1Split[0].split("");
-      let x1String = "";
-      let x1Index = 0;
-      while (x1StringArray[x1Index] != "x") {
-        x1String += x1StringArray[x1Index];
-        x1Index++;
+    //Step 4. Fraction/Decimal Answers
+    else {
+      //Step 4a. Fractions Reduceable to Integers Answers
+      if (num % coefficient == 0) {
+        num /= coefficient;
+        work += `${variable} = ${num}`;
+        answer = `${variable} = ${num}`;
       }
-      coefficientsMatrix[0][0] = x1String;
-    }
-    //y1
-    let y1String = 0;
-    if (equation1Split[2] == "y") {
-      y1String = 1;
-    } else {
-      let y1StringArray = equation1Split[2].split("");
-      y1String = "";
-      let y1Index = 0;
-      while (y1StringArray[y1Index] != "y") {
-        y1String += y1StringArray[y1Index];
-        y1Index++;
+      else {
+        //Step 4b. Simply Fractions
+        if (GCD(num, coefficient) != 0) {
+          let ratio = GCD(num, coefficient);
+          num /= ratio;
+          coefficient /= ratio;
+        }
+        //Step 4c. New Integer Answers
+        if (coefficient == 1 || coefficient == -1) {
+          if (coefficient == -1) {
+            num *= -1;
+          }
+          work += `${variable} = ${num}`;
+          answer = `${variable} = ${num}`;
+        }
+        //Step 4d. Non-Reduceable Fraction Answers
+        else {
+          let answerFraction = new Fraction(num, coefficient);
+          coefficient = 1;
+          work += `x = ${MathString(answerFraction.toString())} <br>`;
+          answer = `x = ${MathString(answerFraction.toString())} <br> or <br>x ${MathString(answerFraction.toDecimalString())}`;
+        }
       }
     }
-    if (equation1Split[1] == "-") {
-      y1String *= -1;
-    }
-    coefficientsMatrix[0][1] = y1String;
-
-    //Equation 2
-    let equation2Split = equation2.split(" ");
-    //x2
-    if (equation2Split[0] == "x") {
-      coefficientsMatrix[1][0] = 1;
-    } else {
-      let x2StringArray = equation2Split[0].split("");
-      let x2String = "";
-      let x2Index = 0;
-      while (x2StringArray[x2Index] != "x") {
-        x2String += x2StringArray[x2Index];
-        x2Index++;
-      }
-      coefficientsMatrix[1][0] = x2String;
-    }
-    //y2
-    let y2String = 0;
-    if (equation2Split[2] == "y") {
-      y2String = 1;
-    } else {
-      let y2StringArray = equation2Split[2].split("");
-      y2String = "";
-      let y2Index = 0;
-      while (y2StringArray[y2Index] != "y") {
-        y2String += y2StringArray[y2Index];
-        y2Index++;
-      }
-    }
-    if (equation2Split[1] == "-") {
-      y2String *= -1;
-    }
-    coefficientsMatrix[1][1] = y2String;
-    return coefficientsMatrix;
-  } else if (numVars == 3) {
-    let coefficientsMatrix = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-
-    //Equation 1
-    let equation1Split = equation1.split(" ");
-    //x1
-    if (equation1Split[0] == "x") {
-      coefficientsMatrix[0][0] = 1;
-    } else {
-      let x1StringArray = equation1Split[0].split("");
-      let x1String = "";
-      let x1Index = 0;
-      while (x1StringArray[x1Index] != "x") {
-        x1String += x1StringArray[x1Index];
-        x1Index++;
-      }
-      coefficientsMatrix[0][0] = x1String;
-    }
-    //y1
-    let y1String = 0;
-    if (equation1Split[2] == "y") {
-      y1String = 1;
-    } else {
-      let y1StringArray = equation1Split[2].split("");
-      y1String = "";
-      let y1Index = 0;
-      while (y1StringArray[y1Index] != "y") {
-        y1String += y1StringArray[y1Index];
-        y1Index++;
-      }
-    }
-    if (equation1Split[1] == "-") {
-      y1String *= -1;
-    }
-    coefficientsMatrix[0][1] = y1String;
-    //z1
-    let z1String = 0;
-    if (equation1Split[4] == "z") {
-      z1String = 1;
-    } else {
-      let z1StringArray = equation1Split[4].split("");
-      z1String = "";
-      let z1Index = 0;
-      while (z1StringArray[z1Index] != "z") {
-        z1String += z1StringArray[z1Index];
-        z1Index++;
-      }
-    }
-    if (equation1Split[3] == "-") {
-      z1String *= -1;
-    }
-    coefficientsMatrix[0][2] = z1String;
-
-    //Equation 2
-    let equation2Split = equation2.split(" ");
-    //x2
-    if (equation2Split[0] == "x") {
-      coefficientsMatrix[1][0] = 1;
-    } else {
-      let x2StringArray = equation2Split[0].split("");
-      let x2String = "";
-      let x2Index = 0;
-      while (x2StringArray[x2Index] != "x") {
-        x2String += x2StringArray[x2Index];
-        x2Index++;
-      }
-      coefficientsMatrix[1][0] = x2String;
-    }
-    //y2
-    let y2String = 0;
-    if (equation2Split[2] == "y") {
-      y2String = 1;
-    } else {
-      let y2StringArray = equation2Split[2].split("");
-      y2String = "";
-      let y2Index = 0;
-      while (y2StringArray[y2Index] != "y") {
-        y2String += y2StringArray[y2Index];
-        y2Index++;
-      }
-    }
-    if (equation2Split[1] == "-") {
-      y2String *= -1;
-    }
-    coefficientsMatrix[1][1] = y2String;
-
-    //z2
-    let z2String = 0;
-    if (equation2Split[4] == "z") {
-      z2String = 1;
-    } else {
-      let z2StringArray = equation2Split[4].split("");
-      z2String = "";
-      let z2Index = 0;
-      while (z2StringArray[z2Index] != "z") {
-        z2String += z2StringArray[z2Index];
-        z2Index++;
-      }
-    }
-    if (equation2Split[3] == "-") {
-      z2String *= -1;
-    }
-    coefficientsMatrix[1][2] = z2String;
-
-    //Equation 3
-    let equation3Split = equation3.split(" ");
-    //x3
-    if (equation3Split[0] == "x") {
-      coefficientsMatrix[2][0] = 1;
-    } else {
-      let x3StringArray = equation3Split[0].split("");
-      let x3String = "";
-      let x3Index = 0;
-      while (x3StringArray[x3Index] != "x") {
-        x3String += x3StringArray[x3Index];
-        x3Index++;
-      }
-      coefficientsMatrix[2][0] = x3String;
-    }
-    //y3
-    let y3String = 0;
-    if (equation3Split[2] == "y") {
-      y3String = 1;
-    } else {
-      let y3StringArray = equation3Split[2].split("");
-      y3String = "";
-      let y3Index = 0;
-      while (y3StringArray[y3Index] != "y") {
-        y3String += y3StringArray[y3Index];
-        y3Index++;
-      }
-    }
-    if (equation3Split[1] == "-") {
-      y3String *= -1;
-    }
-    coefficientsMatrix[2][1] = y3String;
-
-    //z3
-    let z3String = 0;
-    if (equation3Split[4] == "z") {
-      z3String = 1;
-    } else {
-      let z3StringArray = equation3Split[4].split("");
-      z3String = "";
-      let z3Index = 0;
-      while (z3StringArray[z3Index] != "z") {
-        z3String += z3StringArray[z3Index];
-        z3Index++;
-      }
-    }
-    if (equation3Split[3] == "-") {
-      z3String *= -1;
-    }
-    coefficientsMatrix[2][2] = z3String;
-    return coefficientsMatrix;
+  
+    return [work, answer];
   }
-}
-function createConstantsMatrix(equation1, equation2, equation3) {
-  let numVars = document.getElementById("numVars").value;
-  if (numVars == 1) {
-    let equation1Split = equation1.split(" ");
-    let constantsMatrix = [[equation1Split[2]]];
-    return constantsMatrix;
-  } else if (numVars == 2) {
-    let constantsMatrix = [[0], [0]];
-    let equation1Split = equation1.split(" ");
-    constantsMatrix[0][0] = equation1Split[4];
-    let equation2Split = equation2.split(" ");
-    constantsMatrix[1][0] = equation2Split[4];
-    return constantsMatrix;
-  } else if (numVars == 3) {
-    let constantsMatrix = [[0], [0], [0]];
-    let equation1Split = equation1.split(" ");
-    constantsMatrix[0][0] = equation1Split[6];
-    let equation2Split = equation2.split(" ");
-    constantsMatrix[1][0] = equation2Split[6];
-    let equation3Split = equation3.split(" ");
-    constantsMatrix[2][0] = equation3Split[6];
-    return constantsMatrix;
-  }
-}
 
-function toEquationString(num) {
-  let equationString = "";
-  if (num > 0) {
-    equationString = `+ ${num}`;
-  } else if (num == 0) {
-    equationString = ``;
-  } else {
-    equationString = `- ${-1 * num}`;
-  }
-  if (num == 1) {
-    if (num >= 0) {
-      equationString = `+ `;
-    } else {
-      equationString = `- `;
-    }
-  }
-  return equationString;
-}
-
-function gcd(num1, num2) {
-  if (!(num1 < 0 && num2 < 0)) {
-    if (num1 < 0) {
-      num1 *= -1;
-    } else if (num2 < 0) {
-      num2 *= -1;
-    }
-  }
-  if (num1 / num2 == 1 || (num1 / num2 > 1 && Number.isInteger(num1 / num2))) {
-    return num2;
-  } else if (num2 == 0) {
-    return 0;
-  } else {
-    return gcd(num2, num1 % num2);
-  }
-}
-function lcm(num1, num2) {
-  return num1 / gcd(num1, num2) * num2;
-}
-
-function fractionToDecimal(numerator, denominator) {
-  let numDecimalPlaces = 0;
-  let answerSymbol = `≈`;
-  if ((numerator / denominator) * 10000 % 1000 == 0) {
-    numDecimalPlaces = 1;
-    answerSymbol = `=`;
-  } else if ((numerator / denominator) * 10000 % 100 == 0) {
-    numDecimalPlaces = 2;
-    answerSymbol = `=`;
-  } else if ((numerator / denominator) * 10000 % 10 == 0) {
-    numDecimalPlaces = 3;
-    answerSymbol = `=`;
-  } else {
-    numDecimalPlaces = 3;
-  }
-  return `${answerSymbol} ${(numerator / denominator).toFixed(numDecimalPlaces)}`;
-}
-
-function matrixString(coefficientsMatrix, constantsMatrix) {
   //Create Coefficients Matrix
-  let x1 = coefficientsMatrix[0][0];
-  let y1 = coefficientsMatrix[0][1];
-  let z1 = coefficientsMatrix[0][2];
-  let x2 = coefficientsMatrix[1][0];
-  let y2 = coefficientsMatrix[1][1];
-  let z2 = coefficientsMatrix[1][2];
-  let x3 = coefficientsMatrix[2][0];
-  let y3 = coefficientsMatrix[2][1];
-  let z3 = coefficientsMatrix[2][2];
+  createCoefficientsMatrix(equation1, equation2, equation3) {
+    
+  }
+
   //Create Constants Matrix
-  let constant1 = constantsMatrix[0][0];
-  let constant2 = constantsMatrix[1][0];
-  let constant3 = constantsMatrix[2][0];
-
-  let work = "";
-
-  work += `[${x1}, ${y1}, ${z1}]  [${constant1}]<br>
-           [${x2}, ${y2}, ${z2}]  [${constant2}]<br>
-           [${x3}, ${y3}, ${z3}]  [${constant3}]<br>`;
-  return work;
-}
-function matrixFractionString(coefficientsMatrix, constantsMatrix) {
-  //Create Coefficients Matrix
-  let x1 = coefficientsMatrix[0][0];
-  let y1 = coefficientsMatrix[0][1];
-  let z1 = coefficientsMatrix[0][2];
-  let x2 = coefficientsMatrix[1][0];
-  let y2 = coefficientsMatrix[1][1];
-  let z2 = coefficientsMatrix[1][2];
-  let x3 = coefficientsMatrix[2][0];
-  let y3 = coefficientsMatrix[2][1];
-  let z3 = coefficientsMatrix[2][2];
-  //Create Constants Matrix
-  let constant1 = constantsMatrix[0][0];
-  let constant2 = constantsMatrix[1][0];
-  let constant3 = constantsMatrix[2][0];
-
-  let work = "";
-
-  work += `[${x1.toString()}, ${y1.toString()}, ${z1.toString()}]  [${constant1}]<br>
-           [${x2.toString()}, ${y2.toString()}, ${z2.toString()}]  [${constant2}]<br>
-           [${x3.toString()}, ${y3.toString()}, ${z3.toString()}]  [${constant3}]<br>`;
-  return work;
+  createConstantsMatrix(equation1, equation2, equation3) {
+    
+  }
 }
 
 export default EquationSolver;

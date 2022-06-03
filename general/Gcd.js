@@ -1,3 +1,4 @@
+//GCM class for finding the Greatest Common Denominator of 2 Numbers
 function GCD(num1, num2){
   if(!(num1<0 && num2<0)){
     if(num1 < 0){
